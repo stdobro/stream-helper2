@@ -38,4 +38,4 @@ jobs:
             --retry-max 5 \
             --twitch-disable-ads \
             --http-header "User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" \
-            https://www.twitch.tv/lepestqchek worst --stdout > /dev/null
+            https://www.twitch.tv/mik04ka worst --stdout > /dev/null
