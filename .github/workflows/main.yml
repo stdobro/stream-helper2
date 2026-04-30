@@ -20,5 +20,5 @@ jobs:
         run: |
           # Плавный вход: каждый бот заходит с интервалом в 15 секунд
           sleep $(( (${{ matrix.id }} - 1) * 15 ))
-          streamlink --retry-streams 30 --retry-max 5 --http-header "User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0" https://www.twitch.tv/coolreder audio_only --stdout > /dev/null &
+          streamlink --retry-streams 30 --retry-max 5 --http-header "User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0" https://www.twitch.tv/lepestqchek audio_only --stdout > /dev/null &
           sleep 21600
