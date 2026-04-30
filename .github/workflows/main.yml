@@ -1,41 +1,23 @@
-name: Stream_Safe_6_Updated
-on:
-  workflow_dispatch:
-
-jobs:
-  viewer_farm:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    strategy:
-      fail-fast: false
-      matrix:
-        # Увеличил задержку между запусками для обхода флуд-контроля
-        id: [1, 2, 3, 4, 5]
-    steps:
-      - name: Install Streamlink
+- name: Run Viewer with Fix
         run: |
-          python3 -m pip install --upgrade streamlink
-
-      - name: Check Stream and Run Viewer
-        run: |
-          # 1. Проверка: онлайн ли стрим вообще?
+          # 1. Проверка стрима
           if ! streamlink --can-handle-url https://www.twitch.tv/lepestqchek; then
-            echo "Ошибка: Стрим недоступен или ссылка неверна."
+            echo "Ошибка: Стрим недоступен."
             exit 1
           fi
 
-          # 2. Плавный вход: разносим запуск ботов (от 0 до 60 секунд)
+          # 2. Плавный вход
           WAIT_TIME=$(( (${{ matrix.id }} - 1) * 15 ))
-          echo "Ожидание $WAIT_TIME секунд перед подключением бота №${{ matrix.id }}..."
+          echo "Ожидание $WAIT_TIME сек..."
           sleep $WAIT_TIME
 
-          # 3. Запуск без '&' в конце. 
-          # Теперь GitHub будет считать задачу ВЫПОЛНЯЮЩЕЙСЯ, пока идет стрим.
-          # Используем 'worst' вместо 'audio_only', так лучше засчитываются просмотры.
-          echo "Бот №${{ matrix.id }} подключается к трансляции..."
+          # 3. Исправленный запуск
+          # Добавлен --stdout и перенаправление > /dev/null
+          # Убран '&', чтобы процесс оставался активным для GitHub
+          echo "Бот №${{ matrix.id }} в деле..."
           streamlink --loglevel info \
             --retry-streams 30 \
             --retry-max 5 \
             --twitch-disable-ads \
             --http-header "User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" \
-            https://www.twitch.tv/lepestqchek worst
+            https://www.twitch.tv/lepestqchek worst --stdout > /dev/null
