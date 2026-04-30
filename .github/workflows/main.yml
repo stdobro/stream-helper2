@@ -10,7 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         # Количество ботов (можно менять от 1 до 10-15)
-        id: [1, 2, 3, 4, 5, 6]
+        id: [1, 2, 3, 4, 5]
     steps:
       - name: Install Streamlink
         run: |
