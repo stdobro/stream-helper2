@@ -1,4 +1,4 @@
-name: Stream_Safe_6_Updated
+name: Twitch_Proxy_Farm_mik04ka_Debug
 on:
   workflow_dispatch:
 
@@ -9,34 +9,50 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Количество ботов
+        # 5 параллельных ботов
         id: [1, 2, 3, 4, 5]
     
     env:
-      STREAM_URL: "https://www.twitch.tv/la4argue"
+      STREAM_URL: "https://www.twitch.tv/mik04ka"
 
     steps:
-      - name: Install Streamlink
+      - name: Install Streamlink and cURL
         run: |
           python3 -m pip install --upgrade streamlink
 
-      - name: Run Viewer with Health Check
+      - name: Fetch Free Proxies and Run with Status
         run: |
-          # 1. Проверяем, идет ли стрим в данный момент
-          if ! streamlink "${{ env.STREAM_URL }}" "audio_only,worst" --stream-url > /dev/null 2>&1; then
-            echo "Ошибка: Стрим оффлайн, канал недоступен или указана неверная ссылка."
-            exit 1
-          fi
-
-          # 2. Плавный вход с интервалом в 15 секунд
-          WAIT_TIME=$(( (${{ matrix.id }} - 1) * 15 ))
-          echo "Бот №${{ matrix.id }} ожидает $WAIT_TIME секунд перед подключением..."
-          sleep $WAIT_TIME
-
-          # 3. Запуск. В приоритете чистый звук (минимальная нагрузка), если его нет — самое низкое видео
-          echo "Бот №${{ matrix.id }} запущен и имитирует просмотр..."
-          streamlink --loglevel info \
-            --retry-streams 30 \
-            --retry-max 5 \
-            --http-header "User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" \
-            "${{ env.STREAM_URL }}" "audio_only,worst" --stdout > /dev/null
+          # Скачиваем свежий список бесплатных прокси
+          curl -sS "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=all&timeout=10000&country=all&ssl=all&anonymity=all" > proxies.txt
+          
+          # Перемешиваем список для уникальности адресов у каждого бота
+          shuf proxies.txt -o proxies_shuffled.txt
+          
+          echo "=== Бот №${{ matrix.id }} успешно инициализирован и начинает работу ==="
+          
+          while read -r proxy; do
+            # Убираем лишние символы возврата каретки, если они есть
+            proxy=$(echo "$proxy" | tr -d '\r')
+            
+            echo "[Бот №${{ matrix.id }}] Проверяем прокси: $proxy"
+            
+            # Проверяем, отвечает ли прокси вообще, чтобы не тратить время на мертвые
+            if ! curl --proxytunnel --proxy "http://$proxy" -s --connect-timeout 4 "https://www.twitch.tv" > /dev/null; then
+               echo "[Бот №${{ matrix.id }}] ❌ Прокси не отвечает (Timeout/Dead). Ищем следующий..."
+               continue
+            fi
+            
+            echo "[Бот №${{ matrix.id }}] 🌐 Прокси живой! Пробуем подключиться к стриму..."
+            echo "[Бот №${{ matrix.id }}] 🟢 СТАТУС: РАБОТАЕТ. Имитирую просмотр через $proxy"
+            
+            # Запуск Streamlink. Если прокси рабочий, этот шаг будет висеть активным
+            if streamlink --http-proxy "http://$proxy" --loglevel info --retry-streams 5 "${{ env.STREAM_URL }}" "audio_only,worst" --stdout > /dev/null 2>&1; then
+              echo "[Бот №${{ matrix.id }}] ⚠️ Внимание: Стрим завершился или прокси оборвал соединение."
+            else
+              echo "[Бот №${{ matrix.id }}] 🔴 СТАТУС: ОШИБКА. Twitch сбросил этот прокси или поток упал."
+            fi
+            
+            echo "[Бот №${{ matrix.id }}] Переключаемся на следующий прокси из списка..."
+            sleep 2
+            
+          done < proxies_shuffled.txt
