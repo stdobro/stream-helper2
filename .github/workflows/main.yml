@@ -9,8 +9,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Количество ботов (можно менять от 1 до 10-15)
+        # Количество ботов (параллельных потоков)
         id: [1, 2, 3, 4, 5]
+    
+    # Выносим ссылку в одно место, чтобы не путаться
+    env:
+      STREAM_URL: "https://www.twitch.tv/mik04ka"
+
     steps:
       - name: Install Streamlink
         run: |
@@ -18,9 +23,9 @@ jobs:
 
       - name: Run Viewer with Health Check
         run: |
-          # 1. Проверяем, онлайн ли канал
-          if ! streamlink --can-handle-url https://www.twitch.tv/lepestqchek; then
-            echo "Ошибка: Канал оффлайн или ссылка неверна."
+          # 1. Реальная проверка, идет ли стрим в данный момент
+          if ! streamlink "${{ env.STREAM_URL }}" worst --stream-url > /dev/null 2>&1; then
+            echo "Ошибка: Стрим оффлайн, канал недоступен или указана неверная ссылка."
             exit 1
           fi
 
@@ -30,12 +35,10 @@ jobs:
           sleep $WAIT_TIME
 
           # 3. Запуск основного процесса
-          # Мы используем --stdout > /dev/null, чтобы не было ошибки плеера VLC
-          # Мы НЕ используем '&', чтобы GitHub Actions видел, что процесс активен (синий кружок)
           echo "Бот №${{ matrix.id }} запущен и имитирует просмотр..."
           streamlink --loglevel info \
             --retry-streams 30 \
             --retry-max 5 \
             --twitch-disable-ads \
             --http-header "User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" \
-            https://www.twitch.tv/mik04ka worst --stdout > /dev/null
+            "${{ env.STREAM_URL }}" worst --stdout > /dev/null
