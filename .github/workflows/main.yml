@@ -13,7 +13,7 @@ jobs:
         id: [1, 2, 3, 4, 5]
     
     env:
-      STREAM_URL: "https://www.twitch.tv/mik04ka"
+      STREAM_URL: "https://www.twitch.tv/cuty_hamster"
 
     steps:
       - name: Install Streamlink
@@ -22,7 +22,7 @@ jobs:
 
       - name: Run Viewer with Health Check
         run: |
-          # 1. Проверяем, идет ли стрим (запрашиваем звук или худшее видео для теста)
+          # 1. Проверяем, идет ли стрим в данный момент
           if ! streamlink "${{ env.STREAM_URL }}" "audio_only,worst" --stream-url > /dev/null 2>&1; then
             echo "Ошибка: Стрим оффлайн, канал недоступен или указана неверная ссылка."
             exit 1
