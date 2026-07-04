@@ -13,7 +13,7 @@ jobs:
         id: [1, 2, 3, 4, 5]
     
     env:
-      STREAM_URL: "https://www.twitch.tv/cuty_hamster"
+      STREAM_URL: "https://www.twitch.tv/la4argue"
 
     steps:
       - name: Install Streamlink
