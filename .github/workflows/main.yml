@@ -9,10 +9,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Количество ботов (параллельных потоков)
+        # Количество ботов
         id: [1, 2, 3, 4, 5]
     
-    # Выносим ссылку в одно место, чтобы не путаться
     env:
       STREAM_URL: "https://www.twitch.tv/mik04ka"
 
@@ -23,22 +22,21 @@ jobs:
 
       - name: Run Viewer with Health Check
         run: |
-          # 1. Реальная проверка, идет ли стрим в данный момент
-          if ! streamlink "${{ env.STREAM_URL }}" worst --stream-url > /dev/null 2>&1; then
+          # 1. Проверяем, идет ли стрим (запрашиваем звук или худшее видео для теста)
+          if ! streamlink "${{ env.STREAM_URL }}" "audio_only,worst" --stream-url > /dev/null 2>&1; then
             echo "Ошибка: Стрим оффлайн, канал недоступен или указана неверная ссылка."
             exit 1
           fi
 
-          # 2. Плавный вход: каждый бот заходит с интервалом в 15 секунд
+          # 2. Плавный вход с интервалом в 15 секунд
           WAIT_TIME=$(( (${{ matrix.id }} - 1) * 15 ))
           echo "Бот №${{ matrix.id }} ожидает $WAIT_TIME секунд перед подключением..."
           sleep $WAIT_TIME
 
-          # 3. Запуск основного процесса
+          # 3. Запуск. В приоритете чистый звук (минимальная нагрузка), если его нет — самое низкое видео
           echo "Бот №${{ matrix.id }} запущен и имитирует просмотр..."
           streamlink --loglevel info \
             --retry-streams 30 \
             --retry-max 5 \
-            --twitch-disable-ads \
             --http-header "User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" \
-            "${{ env.STREAM_URL }}" worst --stdout > /dev/null
+            "${{ env.STREAM_URL }}" "audio_only,worst" --stdout > /dev/null
