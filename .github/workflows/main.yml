@@ -26,7 +26,7 @@ jobs:
       - name: Run Viewer with Health Check
         run: |
           # 1. Проверяем, отвечает ли сервер Twitch на эту ссылку
-          if ! streamlink --can-handle-url https://www.twitch.tv/bambulo4ka; then
+          if ! streamlink --can-handle-url https://www.twitch.tv/mik04ka; then
             echo "Ошибка: Не удалось обработать URL."
             exit 1
           fi
@@ -43,4 +43,4 @@ jobs:
             --retry-max 5 \
             --twitch-disable-ads \
             --http-header "User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36" \
-           https://www.twitch.tv/bambulo4ka audio_only,worst --stdout > /dev/null
+           https://www.twitch.tv/mik04ka audio_only,worst --stdout > /dev/null
